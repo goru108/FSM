@@ -1,9 +1,11 @@
-from MR_CannonicalCode import MR_CannonicalCode
-
+import MR_CannonicalCode
+import copy
 """ Finds the MR Pattern"""
 
 
 class MR_Pattern:
+
+
     def __init__(self, v1label, v2label, elabel):
         self.support = 0
         self.v_ids = []
@@ -14,33 +16,37 @@ class MR_Pattern:
         self.Vsets = dict()
         self.idtolabels = dict()
 
-        self.idtolabels[1] = v1label
-        self.idtolabels[2] = v2label
-        self.v_ids.append(1)
-        self.v_ids.append(2)
+        if v1label != None and v2label != None and elabel != None:
+            self.idtolabels[1] = v1label
+            self.idtolabels[2] = v2label
+            self.v_ids.append(1)
+            self.v_ids.append(2)
 
-        m1 = dict()
-        m1[2] = elabel
-        m2 = dict()
-        m2[1] = elabel
-        l1 = []
-        l1.append(m1)
-        l2 = []
-        l2.append(m2)
-        self.adj_list[1] = l1
-        self.adj_list[2] = l2
-        self.cc = MR_CannonicalCode(1, 2, v1label, elabel, v2label)
-        self.can_cod.append(self.cc)
-        self.right_most_path.append(1)
-        self.right_most_path.append(2)
-        self.iscannonical = True
-        self.support = 1
+            m1 = dict()
+            m1[2] = elabel
+            m2 = dict()
+            m2[1] = elabel
+            l1 = []
+            l1.append(m1)
+            l2 = []
+            l2.append(m2)
+            self.adj_list[1] = l1
+            self.adj_list[2] = l2
+            self.cc = MR_CannonicalCode.MR_CannonicalCode(1, 2, v1label, elabel, v2label)
+            self.can_cod.append(self.cc)
+            self.right_most_path.append(1)
+            self.right_most_path.append(2)
+            self.iscannonical = True
+            self.support = 1
 
     def getCan_code(self):
         cc = self.can_cod[0].getCan_code_()
         for i in range(1, len(self.can_cod)):
             cc = cc + ":" + self.can_cod[i].getCan_code_()
         return cc
+
+    def get_lastvid(self):
+        return int(self.v_ids[len(self.v_ids) - 1])
 
     def insert_vid_tid(self, tid, v1id, v2id):
         s = []
@@ -51,43 +57,14 @@ class MR_Pattern:
         self.Vsets[tid] = l
 
     def insert_vid_hs(self, tid, v1id, v2id):
-        s = dict()
-        s.has_key(v1id)
-        s.has_key(v2id)
+        s = []
+        s.append(v1id)
+        s.append(v2id)
         (self.Vsets.get(tid)).append(s)
 
     def get_adjlist(self, vid):
         l = []
-        it = (self.adj_list.get(vid)).iterator()
-        while it.next:
-            o = it.next()
-            it1 = iter(o.keySet())
-            o1 = it1.next()
-            m = dict()
-            elabel = o.get(o1)
-
-            m.put(self.idtolabels.get(o1), elabel)
-            l.add(m)
-        return l
-
-    def noEdgeexist(self, v1id, v2id):
-        l = []
-        it = iter(self.adj_list.get(v1id))
-
-        while True:
-            try:
-                o = it.next()
-                it1 = iter((o).keySet())
-                o1 = it1.next()
-                if int(o1) == v2id:
-                    return False
-            except StopIteration:
-                break
-        return True
-
-    def get_adjlist(self, vid):
-        l = []
-        it = iter(self.adj_list.__getitem__(vid))
+        it = iter(self.adj_list.get(vid))
         while True:
             try:
                 o = it.next()
@@ -97,11 +74,12 @@ class MR_Pattern:
                 elabel = o.get(o1)
 
                 m[self.idtolabels.get(o1)] = elabel
-                l.add(m)
+                l.append(m)
             except StopIteration:
                 break
 
         return l
+
 
     def noEdgeexist(self, v1id, v2id):
         l = []
@@ -120,9 +98,8 @@ class MR_Pattern:
         return True
 
     def addflesh_backextension(self, P, vlabel, elabel, added_vlabel, v1id, v2id):
-        cc = MR_CannonicalCode()
-        cc.MR_CannonicalCode(v1id, v2id, vlabel, elabel, added_vlabel)
-        self.can_cod.add(cc)
+        cc=MR_CannonicalCode.MR_CannonicalCode(v1id, v2id, vlabel, elabel, added_vlabel)
+        self.can_cod.append(cc)
 
         m = dict()
         m[v2id] = elabel
@@ -131,11 +108,11 @@ class MR_Pattern:
         m1[v1id] = elabel
         self.adj_list.get(v2id).append(m1)
 
-        for i in range(0, len(P.right_most_path)):
+        for i in range(len(P.right_most_path)):
             self.right_most_path.append(P.right_most_path[i])
 
     def addflesh(self, P, vlabel, elabel, added_vlabel, v1id, v2id, minsup):
-        cc = MR_CannonicalCode(v1id, v2id, vlabel, elabel, added_vlabel)
+        cc = MR_CannonicalCode.MR_CannonicalCode(v1id, v2id, vlabel, elabel, added_vlabel)
         self.can_cod.append(cc)
         m = dict()
         m[v2id] = elabel
@@ -150,12 +127,24 @@ class MR_Pattern:
         it = iter(self.v_ids)
         obj1 = it.next()
         self.update_right_most_path_new(P, v1id, v2id)
-    
+
+    def update_right_most_path_new(self, P, extensionpoint, idtobeadded):
+        self.right_most_path = []
+        temp = []
+        index=0
+        i=0
+        for i in range(len(P.right_most_path)):
+            self.right_most_path.append(P.right_most_path[i])
+            if int(P.right_most_path[i]) == extensionpoint :
+                break
+
+		self.right_most_path.append(idtobeadded)
+        # print " In update right most path ", self.right_most_path
 
     def getelabel(self, v1id, v2id):
         n = []
         n = self.adj_list.get(v1id)
-        it = iter()
+        it = iter(n)
         elabel = 0
         while True:
             try:
@@ -180,7 +169,7 @@ class MR_Pattern:
                 it1 = iter(o.keys())
                 o1 = it1.next()
                 m = dict()
-                elabel = o.get(o1)
+                elabel = int(o.get(o1))
                 m[o1] = elabel
                 l.append(m)
             except StopIteration:
@@ -188,10 +177,10 @@ class MR_Pattern:
         return l
 
     def clone(self):
-        obj = MR_Pattern()
-        for i in range(0, len(self.v_ids)):
-            obj.self.v_ids.append(self.v_ids[i])
-
+        obj = MR_Pattern(None, None, None)
+        for i in range(len(self.v_ids)):
+            obj.v_ids.append(self.v_ids[i])
+        # print "MR_Pattern id2labels", self.idtolabels
         it = iter(self.idtolabels.keys())
         it1 = iter(self.idtolabels.values())
         while True:
@@ -215,8 +204,8 @@ class MR_Pattern:
                         it1 = iter(o.keys())
                         o2 = it1.next()
                         m = dict()
-                        elabel = (o.get(o2))
-                        vlabel = o2
+                        elabel = int(o.get(o2))
+                        vlabel = int(o2)
                         m[vlabel] = elabel
                         l.append(m)
                     except StopIteration:
@@ -227,7 +216,7 @@ class MR_Pattern:
         obj.vat = dict()
         obj.iscannonical = True
 
-        for i in range(0, len(self.can_cod)):
+        for i in range(len(self.can_cod)):
             obj.can_cod.append(self.can_cod[i])
 
         obj.support = self.support
@@ -240,6 +229,7 @@ class MR_Pattern:
         srcl1 = int(self.idtolabels.get(1))
         destl1 = int(self.idtolabels.get(2))
         e = (self.getelabel(1, 2))
+        # print " In check iso srcl1 and destl1", srcl1, destl1, e, ids, sde
         new_e = self.iso_startup(int(srcl1), destl1, e, ids, sde)
         srcl = int(sde[0])
         destl = int(sde[1])
@@ -249,11 +239,10 @@ class MR_Pattern:
             try:
                 obj = it.next()
                 it1 = iter(obj.keys())
-                obj1 = it1.next
+                obj1 = it1.next()
                 gi = int(obj1)
                 gj = int(obj.get(obj1))
-                dfs = MR_CannonicalCode()
-                dfs.mindfs(1, 2, srcl, new_e, destl, gi, gj)
+                dfs=MR_CannonicalCode.mindfs(1, 2, srcl, new_e, destl, gi, gj)
                 dfscode.append(dfs)
 
             except StopIteration:
@@ -263,7 +252,7 @@ class MR_Pattern:
         if c.lessthan(self.can_cod[0]):
             return False
 
-        for i in range(0, len(dfscode)):
+        for i in range(len(dfscode)):
             r = self.minimal(dfscode[i])
             if not r:
                 self.iscannonical = False
@@ -275,12 +264,15 @@ class MR_Pattern:
     def minimal(self, new_code):
         if len(self.can_cod) == len(new_code.codes):
             return True
+
         lastadded = new_code.codes[len(new_code.codes) - 1]
         is_last_fwd = (lastadded.v1id < lastadded.v2id)  # denotes if last edge in new_code was a fwd edge
+
         if is_last_fwd:
             last_vid = lastadded.v2id
         else:
             last_vid = lastadded.v1id  # vid to which edge shall be added
+
         last_vid_g = new_code.gid(last_vid)
         e = 0
         adj_list = self.get_adjlist_ids(last_vid_g)
@@ -290,10 +282,8 @@ class MR_Pattern:
 
         # first try to add BACK EDGE
         back_vid = last_vid
-        if is_last_fwd:  # add the farthest back edge you find
-            last_back_vid = -1
-        else:  # add a back edge only if it 's after the last back edge present
-            last_back_vid = lastadded.v2id
+
+        last_back_vid = -1 if is_last_fwd else lastadded.v2id
 
         it = iter(adj_list)
         while True:
@@ -315,8 +305,8 @@ class MR_Pattern:
                 if rmvaddindex < 0:
                     continue
 
-                if (new_code.cid(neibor) < back_vid and new_code.cid(
-                        neibor) > last_back_vid):  # self vertex is farthest one seen so far
+                if (new_code.cid(neibor) < back_vid) and (new_code.cid(neibor) > last_back_vid):
+                    # self vertex is farthest one seen so far
                     #  a valid back edge must end at a vertex after last_back_vid
                     back_vid = new_code.cid(neibor)
                     e = int(obj1.get(obj2))
@@ -325,8 +315,8 @@ class MR_Pattern:
 
         if back_vid != last_vid:  # valid back edge found
             lblv1 = int(self.idtolabels.get(new_code.gid(last_vid)))
-            lblv2 = (int(self.idtolabels.get(new_code.gid(back_vid))))
-            c = MR_CannonicalCode(last_vid, back_vid, lblv1, e, lblv2)
+            lblv2 = int(self.idtolabels.get(new_code.gid(back_vid)))
+            c = MR_CannonicalCode.MR_CannonicalCode(last_vid, back_vid, lblv1, e, lblv2)
 
             if c.lessthan(self.can_cod[code_index]):
                 # print("decision at back-edge: new tuple is more minimal")
@@ -336,7 +326,7 @@ class MR_Pattern:
                 # print("decision at back-edge: current tuple is more minimal")
                 return True
             else:
-                new_code.codes.add(c)
+                new_code.codes.append(c)
                 # no changes to  new_code's rmp, nor to the cid-gid mappings since back edge implies both vertices were already present in it
                 # print("size of new_code inside back = " + len(new_code.codes))
                 return self.minimal(new_code)
@@ -352,7 +342,7 @@ class MR_Pattern:
         extensionpoint = 0
         for i in range(len(rmp) - 1, -1):
             extensionpoint = int(rmp[i])
-            del adj_list[:]
+            adj_list = []
             adj_list = self.get_adjlist_ids(new_code.gid(extensionpoint))
             it = iter(adj_list)
             while True:
@@ -374,21 +364,21 @@ class MR_Pattern:
 
                         if possibleextensionElabel < e:
                             # new minimal edge found
-                            del new_vids[:]
+                            new_vids = []
                             e = possibleextensionElabel
                             dest_v = curr_lbl
 
                         if curr_lbl <= dest_v:
                             # minimal dest label
                             if curr_lbl < dest_v:
-                                del new_vids[:]
+                                new_vids = []
                                 dest_v = curr_lbl
 
                             new_vids.append(possibleextension)
                 except StopIteration:
                     break
 
-            if not new_vids:
+            if new_vids:
                 # fwd extension found at self level
                 fwd_found = True
                 break
@@ -399,9 +389,9 @@ class MR_Pattern:
             return True
 
         # print "extensionpoint = " , extensionpoint , "added with =" , (last_vid + 1)
-        c = MR_CannonicalCode(extensionpoint, last_vid + 1, self.idtolabels.get(new_code.gid(extensionpoint)), e,
+        c = MR_CannonicalCode.MR_CannonicalCode(extensionpoint, last_vid + 1, self.idtolabels.get(new_code.gid(extensionpoint)), e,
                               self.idtolabels.get(new_vids[0]))
-        if c.lessthan((MR_CannonicalCode)(self.can_cod[code_index])):
+        if c.lessthan(self.can_cod[code_index]):
             # new edge is more minimal
             return False
         if self.can_cod[code_index].lessthan(c):
@@ -409,7 +399,7 @@ class MR_Pattern:
             return True
 
         # check minimality against each new code
-        for i in range(0, len(new_vids)):
+        for i in range(len(new_vids)):
             # CAN_CODE next_code = new_code
             next_code = new_code.clone(extensionpoint)
             # mindfs next_code = new_code
@@ -426,32 +416,36 @@ class MR_Pattern:
 
     def iso_startup(self, srcl, destl, e, ids, sde):
         adj_list = []
-        sde.append(0, srcl)
-        sde.append(1, destl)
-        sde.append(2, e)
-        print "v_ids size = ", len(self.v_ids)
+        sde.insert(0, int(srcl))
+        sde.insert(1,  int(destl))
+        sde.insert(2, int(e))
+        # print "v_ids size = ", self.v_ids
         new_e = e
-
-        for i in range(0, len(self.v_ids)):
+        
+        for i in range(len(self.v_ids)):
+            # print "testing"
+            # print "i ", i
+            # print self.idtolabels
             if int(self.idtolabels.get(self.v_ids[i])) > srcl:
                 continue
 
             adj_list = self.get_adjlist_ids(self.v_ids[i])
             it = iter(adj_list)
             if int(self.idtolabels.get(self.v_ids[i])) < srcl:
-                del ids[:]
-                obj = it.next
+                ids = []
+                obj = it.next()
                 it2 = iter(obj.keys())
-                obj2 = it2.next
+                obj2 = it2.next()
                 srcl = int(self.idtolabels.get(self.v_ids[i]))
                 destl = int(self.idtolabels.get(obj2))
                 new_e = int(obj.get(obj2))
-                sde.append(0, srcl)
-                sde.append(1, destl)
-                sde.append(2, new_e)
+                sde[0] = srcl
+                sde[1] = destl
+                sde[2] = new_e
                 m = dict()
                 m[self.v_ids[i]] = obj2
                 ids.append(m)
+                # print "ids:", ids
 
             while True:
                 try:
@@ -461,38 +455,40 @@ class MR_Pattern:
 
                     if int(obj.get(obj2)) <= e:
                         if int(obj.get(obj2)) < e:
-                            del ids[:]
+                            ids = []
                             destl = int(self.idtolabels.get(obj2))
                             new_e = int(obj.get(obj2))
 
-                            sde.append(1, destl)
-                            sde.append(2, new_e)
+                            sde[1] = destl
+                            sde[2] = new_e
                             m = dict()
                             m[self.v_ids[i]] = obj2
                             ids.append(m)
 
                             continue
 
+
+                    if (self.idtolabels.get(obj2)) <= destl:
+                        if (self.idtolabels.get(obj2)) < destl:
+                            ids=[]
+                            destl = int(self.idtolabels.get(obj2))
+                            sde[1] = destl
+
+                        m = dict()
+                        m[self.v_ids[i]] = obj2
+
+                        ids.append(m)
+
                 except StopIteration:
                     break
 
-            if (self.idtolabels.get(obj2)) <= destl:
-                if (self.idtolabels.get(obj2)) < destl:
-                    ids.clear()
-                    destl = int(self.idtolabels.get(obj2))
-                    sde.append(1, destl)
-
-                m = dict()
-                m[self.v_ids()[i]] = obj2
-
-                ids.add(m)
         return new_e
 
     def copy_vids_tid(self,P, gid, offset):
         s = []
         s = P.Vsets.get(gid)[offset]
         s1 = []
-        for i in range(0, len(s)):
+        for i in range(len(s)):
             s1.append(s[i])
 
         l = []
@@ -522,11 +518,11 @@ class MR_Pattern:
         k = 0
         offset_v1 = 0
         off = -1
-        for i in range(0, len(evat1)):
+        for i in range(len(evat1)):
             v1 = int((evat1[i]).keys()[0])
             v2 = int((evat1[i]).get(v1))
 
-            for j in range(0, len(evat2)):
+            for j in range(len(evat2)):
                 v3 = int((evat2[j]).keys()[0])
                 v4 = int(evat2[j].get(v3))
 
@@ -571,6 +567,7 @@ class MR_Pattern:
                         swap_vids = False
                     if new_edge_state - 1 == 1:
                         swap_vids = True
+
                     if l2_eq:
                         if not swap_vids:
                             if v1 != v3:
@@ -613,7 +610,8 @@ class MR_Pattern:
                         continue
 
                 if rmp_index == 0:
-                    if self.Vsets.isEmpty():
+
+                    if not self.Vsets:
                         self.copy_vids_tid(P, gid, offset_v1)
                     elif self.Vsets.get(gid) is None:
                         self.copy_vids_tid(P, gid, offset_v1)
@@ -621,7 +619,7 @@ class MR_Pattern:
                         self.copy_vids_hs(P, gid, offset_v1)
                     off += 1
 
-                if rmp_index > 0 and self.vat.isEmpty():
+                if rmp_index > 0 and not self.vat:
                     self.copy_vats_entry(P, rmp_index, gid, l2_swap, i, offset_v1)
                     off += 1
                 elif rmp_index > 0:
@@ -632,24 +630,15 @@ class MR_Pattern:
                 key = 0
                 value = 0
                 if not l2_eq:
-                    if is_fwd_chain:
-                        key = v2
-                    else:
-                        key = v1
+                    key = v2 if is_fwd_chain else v1
                 else:
-                    if not l2_swap:
-                        key = v2
-                    else:
-                        key = v1
+                    key = v2 if not l2_swap else v1
 
-                if swap_vids:
-                    value = v3
-                else:
-                    value = v4
+                value = v3 if swap_vids else v4
 
                 new_occurrence[key] = value
                 if not is_fwd_chain:
-                    if gid in self.vat:
+                    if gid in self.vat.keys():
                         self.vat.get(gid)[0].append(new_occurrence)
                         self.insert_vid(gid, off, key)
                         self.insert_vid(gid, off, value)
@@ -677,7 +666,8 @@ class MR_Pattern:
                         self.insert_vid(gid, off, value)
 
     def back_intersect(self, P, evat1, evat2, cand_vat, new_edge_state, back_idx, gid):
-        swap_vids = False # flag to denote if vids in evat_v2 should be swapped before comparison with v1
+        swap_vids = False
+        # flag to denote if vids in evat_v2 should be swapped before comparison with v1
         v1=0
         v2=0
         v3=0
@@ -686,12 +676,12 @@ class MR_Pattern:
         j=0
         k=0
         offset_v1=0
-        for i in range(0, len(evat1)):
+        for i in range(len(evat1)):
             v1 = (int(evat1[i]).keys()[0])
             v2 = (int(evat1[i].get(v1)))
-
-            for j in range(0, len(evat2)):
-                v3 = (int(evat2[j].keys()[0]))
+            offset_v1 += 1
+            for j in range(len(evat2)):
+                v3 = int(evat2[j].keys()[0])
                 v4 = int(evat2[j].get(v3))
 
                 if new_edge_state == 0 :
@@ -714,9 +704,9 @@ class MR_Pattern:
                         continue
 
                 # check that the back vertex is right one in this occurrence
-                if not swap_vids and P.vat.get(gid)[back_idx][i].keys()[0] != v4 :
+                if not swap_vids and (P.vat.get(gid)[back_idx])[i].keys()[0] != v4 :
                     continue
-                if swap_vids and P.vat.get(gid)[back_idx][i].keys()[0] != v3 :
+                if swap_vids and (P.vat.get(gid)[back_idx])[i].keys()[0] != v3 :
                     continue
 
                 # this is a valid back extension no new evat is prepared for a back extension simply copy the appropriate ones to cand_vat
@@ -726,10 +716,11 @@ class MR_Pattern:
         l = []
         m = dict()
         m2 = dict()
-        if self.vat.isEmpty() :
+
+        if not self.vat :
             k=0
     
-            for i in range(0,rmp_index):
+            for i in range(rmp_index):
                 m = P.vat.get(gid)[i][index]
                 key = (int(m.keys()[0]))
                 value = (int(m.get(key)))
@@ -749,11 +740,11 @@ class MR_Pattern:
         else:
             k=0
 
-            if gid not in self.vat :
+            if gid not in self.vat.keys() :
                 k1=0
 
-                for i in range(0,rmp_index):
-                    m = P.vat.get(gid)[i][index]
+                for i in range(rmp_index):
+                    m = (P.vat.get(gid)[i])[index]
                     key = (int(m.keys()[0]))
                     value = (int(m.get(key)))
                     if l2_swap :
@@ -774,8 +765,8 @@ class MR_Pattern:
             else:
                 k1=0
 
-                for i in range(0, rmp_index):
-                    m = (P.vat.get(gid)[i][index])
+                for i in range(rmp_index):
+                    m = P.vat.get(gid)[i]
                     key = int(m.keys()[0])
                     value = (int(m.get(key)))
                     if l2_swap :
@@ -795,15 +786,20 @@ class MR_Pattern:
         return True
 
     def vat_intersection(self, P, vat2):
+        self.Vsets = dict()
         is_fwd_chain = False  # flag to denote whether edge appended by intersection is at the root (which is when flag=0)
         cand_vat = []
-        l2_eq = (len(self.v_ids) == 3) and ((self.idtolabels.get(1)) == (
-        self.idtolabels.get(2)))  # special case in evat intersection for L-2 with first edge with equal vertex labels
-        new_edge_state = -1  # flag to denote if the new edge to be added has same labeled vertices, of the form A-A (flag=0) or is of the form  A-B (flag=1)
+        l2_eq = (len(self.v_ids) == 3) and ((self.idtolabels.get(1)) == (self.idtolabels.get(2)))
+        new_edge_state = -1
+
+        # special case in evat intersection for L-2 with first edge with equal vertex labels
+        # flag to denote if the new edge to be added has same labeled vertices, of the form A-A (flag=0) or is of the form  A-B (flag=1)
         #  or is not canonical at all, of the form B-A (flag=2) evat intersection needs to take self into account
 
+        # print "vat _intersection : ", self.idtolabels
         back_idx = -1
-        rvid = (self.right_most_path[len(self.right_most_path) - 1])
+        # print " self.right_most_path ", self.right_most_path
+        rvid = int(self.right_most_path[len(self.right_most_path) - 1])
         edge_vid = -1  # vid of the other vertex (other than rvid) connected to rvid as to form the new edge
 
         degree = len(self.adj_list.get(rvid))
@@ -825,9 +821,9 @@ class MR_Pattern:
             edge_vid = int(((self.adj_list.get(rvid))[degree - 1]).keys()[0])
 
             # now determine the index of edge_vid on rmp of candidate. self is used by back_intersect.
-            # TO DO: self is currently a linear search through rmp, is there a more efficient way??
+            # TO DO: self is c  urrently a linear search through rmp, is there a more efficient way??
 
-            for i in range(0, len(self.right_most_path)):
+            for i in range(len(self.right_most_path)):
                 if int((self.right_most_path[i])) == edge_vid:
                     back_idx = i
                     break
@@ -864,10 +860,10 @@ class MR_Pattern:
         Pvatgid = []
         vat2gid = []
 
-        for i1 in range(0, len(P.vat.keys())):
+        for i1 in range(len(P.vat.keys())):
             Pvatgid.append(P.vat.keys()[i1])
 
-        for i1 in range(0, len(vat2.keys())):
+        for i1 in range(len(vat2.keys())):
             vat2gid.append(vat2.keys()[i1])
 
         Pvatgid.sort()
